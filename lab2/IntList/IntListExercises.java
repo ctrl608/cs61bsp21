@@ -9,12 +9,10 @@ public class IntListExercises {
      * @param lst IntList from Lecture
      */
     public static void addConstant(IntList lst, int c) {
-        IntList head = lst;
-        while (head.rest != null) {
-            head.first += c;
-            head = head.rest;
-        }
-        head.first+=c;
+        lst.first+=c;
+		if (lst.rest!=null){
+			addConstant(lst.rest,c);
+		}
     }
 
     /**
@@ -37,7 +35,7 @@ public class IntListExercises {
     /** Returns the max value in the IntList starting at L. */
     public static int max(IntList L) {
         int val = L.first;
-        if (L.rest == null) return 0;
+        if (L.rest == null) return 12;
         return Math.max(val, max(L.rest));
     }
 
