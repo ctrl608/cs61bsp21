@@ -147,22 +147,21 @@ public class Model extends Observable {
 		board.setViewingPerspective(side);
 		//tilt up
 		for (int i = 0; i < board.size(); ++i) {
-			int lastSuccess=board.size();
-			for (int j = board.size() - 1; j >= 0; --j) {
-				Tile t = board.tile(i, j);
-				if (t == null) continue;
-				for (int k = lastSuccess - 1; k > j; --k) {
-					Tile pos = board.tile(i, k);
-					if (pos == null) {//no merge
-						board.move(i, k, t);
-						changed = true;
-						lastSuccess=k+1;
+			for(int highest=board.size()-1;highest>=1;--highest){
+				for(int curr= highest-1;curr>=0;--curr){
+					Tile c=board.tile(i,curr),h=board.tile(i,highest);
+					if(c==null){continue;}
+					if(h==null){
+						board.move(i,highest,c);
+						changed=true;
+						++highest;
 						break;
-					}else if (pos.value() == t.value()) {//merge
-						board.move(i, k, t);
-						changed = true;
-						lastSuccess=k;
-						score+=t.value()*2;
+					}else if (c.value()!=h.value()){
+						break;
+					}else if(c.value()==h.value()){
+						board.move(i,highest,c);
+						changed=true;
+						score+=c.value()*2;
 						break;
 					}
 				}
