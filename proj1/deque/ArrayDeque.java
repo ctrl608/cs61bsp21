@@ -28,14 +28,12 @@ public class ArrayDeque<T> {
 	}
 
 	private void resize(int newLength) {
-		assert newLength >= size;
-		T[] temp = (T[]) new Object[newLength];
-		int prevLength= array.length;
-		//[0,head) (head,preLen)
-		System.arraycopy(array, 0, temp, 0, head);
-		System.arraycopy(array,head,temp,head+newLength-prevLength,size-head);
-		head=head+newLength-prevLength;
-		array=temp;
+		T[] newArray = (T[]) new Object[newLength];
+		for (int i = 0; i < size; i++) {
+			newArray[i] = array[(head + i) % array.length];
+		}
+		array = newArray;
+		head = 0;
 	}
 
 	public T get(int index) {
@@ -55,23 +53,33 @@ public class ArrayDeque<T> {
 	}
 
 	public void addLast(T item) {
-		if (size >= array.length) {
+		if (size == array.length) {
 			resize(array.length * 2);
 		}
-		array[(head+size+array.length)%array.length] = item;
+		array[(head + size) % array.length] = item;
 		size += 1;
 	}
 
 	public T removeLast() {
-		size-=1;
-		return array[(head+size+array.length)%array.length];
+		if (isEmpty()) {
+			return null;
+		}
+		int lastIndex = (head + size - 1 + array.length) % array.length;
+		T item = array[lastIndex];
+		array[lastIndex] = null;
+		size -= 1;
+		return item;
 	}
 
 	public T removeFirst() {
-		T prevFirst=array[head];
-		head=(head+1)%array.length;
-		size-=1;
-		return prevFirst;
+		if (isEmpty()) {
+			return null;
+		}
+		T item = array[head];
+		array[head] = null;
+		head = (head + 1) % array.length;
+		size -= 1;
+		return item;
 	}
 
 	public void printDeque() {
@@ -85,7 +93,7 @@ public class ArrayDeque<T> {
 	}
 
 	public boolean isEmpty() {
-		return size != 0;
+		return size == 0;
 	}
 
 
