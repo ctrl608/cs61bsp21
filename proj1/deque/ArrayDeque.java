@@ -64,11 +64,14 @@ public class ArrayDeque<T> {
 
 	public T removeLast() {
 		size-=1;
+		return array[(head+size+array.length)%array.length];
 	}
 
 	public T removeFirst() {
+		T prevFirst=array[head];
 		head=(head+1)%array.length;
 		size-=1;
+		return prevFirst;
 	}
 
 	public void printDeque() {
