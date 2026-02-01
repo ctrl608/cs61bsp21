@@ -119,9 +119,8 @@ public class LinkedListDeque<T> implements Iterable<T> {
 
 		@Override
 		public boolean hasNext() {
-			return curr.next != sentinel;
+			return curr != sentinel;
 		}
-
 		@Override
 		public T next() {
 			T item =curr.value;
@@ -135,14 +134,17 @@ public class LinkedListDeque<T> implements Iterable<T> {
 		return new DequeIterator();
 	}
 
-	public boolean equals(Object o){
-		if(!(o instanceof LinkedListDeque<?> other))return false;
-		if(other.size()!=this.size())return false;
-        Iterator<T> a=this.iterator();
-		Iterator<?> b=other.iterator();
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof LinkedListDeque)) return false;
+		LinkedListDeque<?> other = (LinkedListDeque<?>) o;
+		if (other.size() != this.size()) return false;
+		Iterator<T> a = this.iterator();
+		Iterator<?> b = other.iterator();
 		while (a.hasNext()) {
 			if (!Objects.equals(a.next(), b.next())) return false;
 		}
+
 		return true;
 	}
 }
