@@ -2,7 +2,7 @@ package deque;
 
 import org.junit.Test;
 
-public class ArrayDeque<T> {
+public class ArrayDeque<T> implements Deque<T> {
 	private T[] array;
 	private int size;
 	private int head;
@@ -35,14 +35,14 @@ public class ArrayDeque<T> {
 		array = newArray;
 		head = 0;
 	}
-
+@Override
 	public T get(int index) {
 		if (index < 0 || index >= size) return null;
 		int realIndex = (index + head) % array.length;
 		return array[realIndex];
 	}
 
-
+@Override
 	public void addFirst(T item) {
 		if (size == array.length) {
 			resize(array.length * 2);
@@ -51,7 +51,7 @@ public class ArrayDeque<T> {
 		array[head] = item;
 		size += 1;
 	}
-
+@Override
 	public void addLast(T item) {
 		if (size == array.length) {
 			resize(array.length * 2);
@@ -59,7 +59,7 @@ public class ArrayDeque<T> {
 		array[(head + size) % array.length] = item;
 		size += 1;
 	}
-
+@Override
 	public T removeLast() {
 		if (isEmpty()) {
 			return null;
@@ -70,7 +70,7 @@ public class ArrayDeque<T> {
 		size -= 1;
 		return item;
 	}
-
+@Override
 	public T removeFirst() {
 		if (isEmpty()) {
 			return null;
@@ -81,19 +81,15 @@ public class ArrayDeque<T> {
 		size -= 1;
 		return item;
 	}
-
+@Override
 	public void printDeque() {
 		for (int i = 0; i < size; ++i) {
 			System.out.print(get(i) + " ");
 		}
 	}
-
+@Override
 	public int size() {
 		return size;
-	}
-
-	public boolean isEmpty() {
-		return size == 0;
 	}
 
 

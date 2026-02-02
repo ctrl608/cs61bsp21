@@ -1,9 +1,11 @@
 package deque;
 
+import com.sun.tools.internal.xjc.model.CDefaultValue;
+
 import java.util.Iterator;
 import java.util.Objects;
 
-public class LinkedListDeque<T> implements Iterable<T> {
+public class LinkedListDeque<T> implements Iterable<T> ,Deque<T> {
 	private static class Node<T> {
 		T value;
 		Node<T> prev, next;
@@ -17,13 +19,19 @@ public class LinkedListDeque<T> implements Iterable<T> {
 
 	private int size;
 	private Node<T> sentinel;
-
 	public LinkedListDeque() {
 		sentinel = new Node<T>(null, null, null);
 		sentinel.prev = sentinel;
 		sentinel.next = sentinel;
 		size = 0;
 	}
+	public LinkedListDeque(int size,T value) {
+		this();
+		for(int i=0;i<size;++i){
+			this.addLast(value);
+		}
+	}
+
 
 	private boolean isNotValidIndex(int index) {
 		if (index < 0 || index >= size) {
@@ -32,29 +40,25 @@ public class LinkedListDeque<T> implements Iterable<T> {
 		}
 		return false;
 	}
-
+@Override
 	public void addFirst(T item) {
 		Node<T> adding = new Node<>(item, sentinel, sentinel.next);
 		sentinel.next = adding;
 		adding.next.prev = adding;
 		size += 1;
 	}
-
+@Override
 	public void addLast(T item) {
 		Node<T> adding = new Node<>(item, sentinel.prev, sentinel);
 		sentinel.prev = adding;
 		adding.prev.next = adding;
 		size += 1;
 	}
-
+@Override
 	public int size() {
 		return size;
 	}
-
-	public boolean isEmpty() {
-		return size == 0;
-	}
-
+@Override
 	public void printDeque() {
 		Node<T> curr = sentinel.next;
 		for (int i = 0; i < size; ++i) {
@@ -71,7 +75,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
 		}
 		return curr;
 	}
-
+@Override
 	public T get(int index) {
 		Node<T> temp = getNode(index);
 		return temp == null ? null : temp.value;
@@ -86,7 +90,6 @@ public class LinkedListDeque<T> implements Iterable<T> {
 		if (isNotValidIndex(index))return null;
 		return (new getRecursiveHelper()).helper(index,sentinel.next);
 	}
-
 	//	private Node<T> remove(int index) {
 //		if (isNotValidIndex(index)) return null;
 //		Node<T> removing = getNode(index);
@@ -96,6 +99,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
 //		size -= 1;
 //		return removing;
 //	}
+	@Override
 	public T removeFirst() {
 		if(isEmpty())return null;
 		Node<T> removing = sentinel.next;
@@ -104,7 +108,7 @@ public class LinkedListDeque<T> implements Iterable<T> {
 		size -= 1;
 		return removing.value;
 	}
-
+@Override
 	public T removeLast() {
 		if(isEmpty())return null;
 		Node<T> removing = sentinel.prev;
