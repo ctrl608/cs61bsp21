@@ -1,6 +1,5 @@
 package deque;
 
-import com.sun.tools.internal.xjc.model.CDefaultValue;
 
 import java.util.Iterator;
 import java.util.Objects;
@@ -80,15 +79,18 @@ public class LinkedListDeque<T> implements Iterable<T> ,Deque<T> {
 		Node<T> temp = getNode(index);
 		return temp == null ? null : temp.value;
 	}
-	public T getRecursive(int index){
-		class getRecursiveHelper{
-			public T helper(int index,Node<T> curr){
-				if (index==0) return curr.value;
-				return helper(index-1,curr.next);
-			}
+	public T getRecursive(int index) {
+		if (isNotValidIndex(index)) {
+			return null;
 		}
-		if (isNotValidIndex(index))return null;
-		return (new getRecursiveHelper()).helper(index,sentinel.next);
+		return getRecursiveHelper(index, sentinel.next);
+	}
+
+	private T getRecursiveHelper(int index, Node<T> curr) {
+		if (index == 0) {
+			return curr.value;
+		}
+		return getRecursiveHelper(index - 1, curr.next);
 	}
 	//	private Node<T> remove(int index) {
 //		if (isNotValidIndex(index)) return null;
@@ -140,15 +142,19 @@ public class LinkedListDeque<T> implements Iterable<T> ,Deque<T> {
 
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof LinkedListDeque)) return false;
-		LinkedListDeque<?> other = (LinkedListDeque<?>) o;
-		if (other.size() != this.size()) return false;
+		if (!(o instanceof Deque<?> other)) {
+			return false;
+		}
+		if (other.size() != this.size) {
+			return false;
+		}
 		Iterator<T> a = this.iterator();
 		Iterator<?> b = other.iterator();
 		while (a.hasNext()) {
-			if (!Objects.equals(a.next(), b.next())) return false;
+			if (!Objects.equals(a.next(), b.next())) {
+				return false;
+			}
 		}
-
 		return true;
 	}
 }
