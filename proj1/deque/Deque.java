@@ -2,16 +2,16 @@ package deque;
 
 import java.util.Iterator;
 
-public interface Deque<T> extends  Iterable<T>{
+public interface Deque<T> extends Iterable<T> {
     void addFirst(T item);
 
     void addLast(T item);
 
+    int size();
+
     default boolean isEmpty() {
         return size() == 0;
     }
-
-    int size();
 
     void printDeque();
 
@@ -21,5 +21,6 @@ public interface Deque<T> extends  Iterable<T>{
 
     T get(int index);
 
+    @Override
     Iterator<T> iterator();
 }
