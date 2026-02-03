@@ -69,7 +69,9 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
     }
 
     private Node<T> getNode(int index) {
-        if (isNotValidIndex(index)) return null;
+        if (isNotValidIndex(index)) {
+            return null;
+        }
         Node<T> curr = sentinel;
         for (int i = 0; i <= index; i += 1) {
             curr = curr.next;
@@ -108,7 +110,9 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 //	}
     @Override
     public T removeFirst() {
-        if (isEmpty()) return null;
+        if (isEmpty()) {
+            return null;
+        }
         Node<T> removing = sentinel.next;
         sentinel.next = removing.next;
         removing.next.prev = sentinel;
@@ -118,7 +122,9 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     @Override
     public T removeLast() {
-        if (isEmpty()) return null;
+        if (isEmpty()) {
+            return null;
+        }
         Node<T> removing = sentinel.prev;
         sentinel.prev = removing.prev;
         removing.prev.next = sentinel;

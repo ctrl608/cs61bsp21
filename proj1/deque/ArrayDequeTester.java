@@ -1,6 +1,5 @@
 package deque;
 
-import org.junit.Test;
 
 public class ArrayDequeTester {
     public void test1() {
