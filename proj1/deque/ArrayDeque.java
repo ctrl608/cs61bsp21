@@ -10,13 +10,13 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private final double factor = 2.0;
 
     public ArrayDeque() {
-        size = 0;//user uses
-        array = (T[]) new Object[8];
+        size = 0;
+        array = (T[]) new Object[8] ;
         head = 0;
     }
 
     private void resize(int newLength) {
-        T[] newArray = (T[]) new Object[newLength];
+        T[] newArray = (T[]) new Object[newLength] ;
         for (int i = 0; i < size; i++) {
             newArray[i] = array[(head + i) % array.length];
         }
@@ -120,7 +120,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private class ArrayDequeIterator implements Iterator<T> {
         private int index;
 
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             index = 0;
         }
 
