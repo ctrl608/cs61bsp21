@@ -11,12 +11,12 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     public ArrayDeque() {
         size = 0;
-        array = (T[]) new Object[8] ;
+        array = (T[]) new Object[8];
         head = 0;
     }
 
     private void resize(int newLength) {
-        T[] newArray = (T[]) new Object[newLength] ;
+        T[] newArray = (T[]) new Object[newLength];
         for (int i = 0; i < size; i++) {
             newArray[i] = array[(head + i) % array.length];
         }
