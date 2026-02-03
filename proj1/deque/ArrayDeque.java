@@ -15,13 +15,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         head = 0;
     }
 
-//	public ArrayDeque(int size) {
-//		this.size = size;
-//		array = (T[]) new Object[(int) (size * factor)];
-//		head = 0;
-//	}
-
-
     private void resize(int newLength) {
         T[] newArray = (T[]) new Object[newLength];
         for (int i = 0; i < size; i++) {

@@ -25,15 +25,6 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
         sentinel.next = sentinel;
         size = 0;
     }
-
-    public LinkedListDeque(int size, T value) {
-        this();
-        for (int i = 0; i < size; ++i) {
-            this.addLast(value);
-        }
-    }
-
-
     private boolean isNotValidIndex(int index) {
         return index < 0 || index >= size;
     }
@@ -98,16 +89,6 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
         }
         return getRecursiveHelper(index - 1, curr.next);
     }
-
-    //	private Node<T> remove(int index) {
-//		if (isNotValidIndex(index)) return null;
-//		Node<T> removing = getNode(index);
-//		assert removing != null;
-//		removing.prev.next = removing.next;
-//		removing.next.prev = removing.prev;
-//		size -= 1;
-//		return removing;
-//	}
     @Override
     public T removeFirst() {
         if (isEmpty()) {
