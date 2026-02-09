@@ -236,4 +236,16 @@ class Utils {
         System.out.printf(msg, args);
         System.out.println();
     }
+
+
+    public static void checkArgs(String []args,int argNum, String msg){
+        if(argNum!=args.length){
+            throw error(msg);
+        }
+    }
+    public static void checkArgsAtLeast(String []args,int argNum){
+        if(args.length<argNum){
+            throw error("Incorrect operands.");
+        }
+    }
 }
