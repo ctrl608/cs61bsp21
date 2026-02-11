@@ -5,6 +5,8 @@ package gitlet;
 import java.io.File;
 import java.util.Objects;
 
+import static gitlet.Repository.*;
+
 /**
  * Driver class for Gitlet, a subset of the Git version-control system.
  *
@@ -20,108 +22,115 @@ public class Main {
      */
 
     //objects
-    public static Commit HEAD;
-    public static String HEADid;
+    public static String HEAD;
+    //example:"master"
+    public static Commit HEADCommit;
     public static Repository.Stage stage;
-    public static String currentBranch;
 
 
     public static void main(String[] args) {
         // TODO: what if args is empty?
-        Utils.checkArgsAtLeast(args, 1);
+        Utils.checkArgsAtLeast(args, 1,"Please enter a command.");
         String firstArg = args[0];
+        if (!Repository.GITLET_DIR.exists() && !firstArg.equals("init")) {
+            throw Utils.error("Not in an initialized Gitlet directory.");
+        }
         //try to load from repos
         if (Repository.GITLET_DIR.exists()) {
             load();
         }
-        switch (firstArg) {
-            case "init":
-                Utils.checkArgs(args, 1, "Incorrect operands.");
-                if (Repository.GITLET_DIR.exists()) {
-                    throw Utils.error("A Gitlet version-control system already exists in the current directory.");
-                }
-                Repository.init();
-                break;
-            case "add":
-                Utils.checkArgs(args, 2, "Incorrect operands.");
-                for (int i = 1; i < args.length; ++i) {
-                    Repository.add(args[i]);
-                }
+        try {
 
-                //save current situation
-                Repository.save();
-                break;
-            // TODO: FILL THE REST IN
-            case "commit":
-                try {
-                    Utils.checkArgs(args, 2, "Incorrect operands.");
-                    Repository.commit(args[1]);
-                } catch (GitletException e) {
-                    System.out.println("Please enter a commit message.");
-                    String msg = new java.util.Scanner(System.in).nextLine();
-                    Repository.commit(msg);
-                }
-                break;
-            case "rm":
-                Utils.checkArgs(args, 2, "Incorrect operands.");
-                String f = args[1];
-                Repository.rm(f);
-                break;
-            case "log":
-                Utils.checkArgs(args, 1, "");
-                Commit curr = HEAD;
-                while (curr != null) {
-                    curr.printCommit();
-                    curr = curr.parent();
-                }
-                break;
-            case "global-log":
-                break;
-            case "find":
-                break;
-            case "status":
-                System.out.println("=== Branches ===");
-                for(File branch: Objects.requireNonNull(Repository.BRANCHES.listFiles())) {
-                    String name=branch.getName();
-                    if(name==currentBranch){
-                        System.out.printf("*");
+            switch (firstArg) {
+
+                case "init":
+                    Utils.checkArgs(args, 1, "Incorrect operands.");
+                    if (Repository.GITLET_DIR.exists()) {
+                        throw Utils.error("A Gitlet version-control system already exists in the current directory.");
                     }
-                    System.out.println(name);
-                }
+                    Repository.init();
+                    break;
+                case "add":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    Repository.add(args[1]);
 
-                System.out.println("=== Staged Files ===");
-                for(String file : stage.additions.keySet()){
-                    System.out.println(file);
-                }
+                    //save current situation
+                    Repository.save();
+                    break;
+                // TODO: FILL THE REST IN
+                case "commit":
+                    Utils.checkArgs(args, 2, "Please enter a commit message.");
+                    if (args[1].isEmpty()) {
+                        throw Utils.error("Please enter a commit message.");
+                    }
+                    Repository.commit(args[1]);
+                    break;
+                case "rm":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    String name = args[1];
+                    Repository.rm(name);
+                    break;
+                case "log":
+                    Utils.checkArgs(args, 1, "Incorrect operands.");
+                    Commit curr = HEADCommit;
+                    while (curr != null) {
+                        curr.print();
+                        curr = curr.parent();
+                    }
+                    break;
+                case "global-log":
+                    Utils.checkArgs(args, 1, "Incorrect operands.");
+                    Repository.globalLog();
+                    break;
+                case "find":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    Repository.find(args[1]);
+                    break;
+                case "status":
+                    Utils.checkArgs(args, 1, "Incorrect operands.");
+                    Repository.status();
+                    break;
+                case "checkout":
 
-                System.out.println("=== Removed Files ===");
-                for(String file: stage.removals){
-                    System.out.println(file);
-                }
+                    /**java gitlet.Main checkout -- [file name]
+                     *java gitlet.Main checkout [commit id] -- [file name]
+                     *java gitlet.Main checkout [branch name]
+                     * */
 
-//                System.out.println("=== Modifications Not Staged For Commit ===");
-//                System.out.println("=== Untracked Files ===");
+                    if (args.length == 2) {
+                        Repository.checkoutBranch(args[1]);
+                    } else if (args.length == 3 && Objects.equals(args[1], "--")) {
+                        Repository.checkoutOne(HEADCommit.toHash(), args[2]);
+                    } else if (args.length == 4 && Objects.equals(args[2], "--")) {
+                        Repository.checkoutOne(args[1], args[3]);
+                    } else {
+                        throw Utils.error("Incorrect operands.");
+                    }
+                    break;
+                case "branch":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    createNewBranch(args[1]);
+                    break;
+                case "rm-branch":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    Repository.rm_branch(args[1]);
+                    break;
+                case "reset":
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
+                    Repository.reset(args[1], true);
+                    break;
+                case "merge":
+                    Utils.checkArgs(args,2,"Incorrect operands.");
+                    Repository.merge(args[1]);
+                    break;
+                default:
+                    throw Utils.error("No command with that name exists.");
+            }
 
-                break;
-            case "checkout":
-                break;
-            case "branch":
-                break;
-            case "rm-branch":
-                break;
-            case "reset":
-                break;
-            case "merge":
-                break;
-            default:
-                throw Utils.error("No command with that name exists.");
+        } catch (GitletException e) {
+            System.out.println(e.getMessage());
         }
+        save();
     }
 
-    public static void load() {
-        //恢复上次关闭状态
-        HEADid = Utils.readObject(Repository.HEADID_FILE, String.class);
-        HEAD = Commit.idToCommit(HEADid);
-        stage = Utils.readObject(Repository.STAGE, Repository.Stage.class);
-    }
 }

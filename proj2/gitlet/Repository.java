@@ -1,8 +1,11 @@
 package gitlet;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+//import java.io.IOException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 //import gitlet.Commit.*;
@@ -41,7 +44,7 @@ public class Repository {
     public static final File BRANCHES = join(GITLET_DIR, "branches");
     public static final File BLOBS = join(GITLET_DIR, "blobs");
     //files
-    public static final File HEADID_FILE = join(GITLET_DIR, "HEADid");
+    public static final File HEAD_FILE = join(GITLET_DIR, "HEAD");
     public static final File STAGE = join(GITLET_DIR, "stage");
 
 
@@ -63,6 +66,10 @@ public class Repository {
         }
 
         public void unstageOne() {
+        }
+
+        public boolean containAdd(String f) {
+            return additions.containsKey(f);
         }
 
         public void replace(String f, String hash) {
@@ -90,15 +97,28 @@ public class Repository {
         COMMITS.mkdir();
         BRANCHES.mkdir();
         BLOBS.mkdir();
-        try {
-            STAGE.createNewFile();
-        } catch (IOException e) {
-            ;
-        }
-        HEAD = Commit.initialCommit();
-        HEAD.saveCommit();
-        HEADid = HEAD.toHash();
+        stage = new Stage();
+
+        HEADCommit = Commit.initialCommit();
+        Utils.writeObject(join(COMMITS, HEADCommit.toHash()), HEADCommit);
+        createNewBranch("master");
+        HEAD = "master";
         save();
+    }
+
+    public static void save() {
+        Utils.writeObject(STAGE, stage);
+        Utils.writeContents(HEAD_FILE, HEAD);
+//        Utils.writeObject(join(COMMITS,HEADCommit.toHash()),HEADCommit);
+
+    }
+
+
+    public static void load() {
+        //恢复上次关闭状态
+        HEAD = Utils.readContentsAsString(HEAD_FILE);
+        HEADCommit = branchLatestCommit(HEAD);
+        stage = Utils.readObject(Repository.STAGE, Repository.Stage.class);
     }
 
     public static void delRecursive(File f) {
@@ -138,28 +158,30 @@ public class Repository {
         //保证了blob存在,但是文件是否需要stage还要分析
         //check if the file is staged
         String stagingHash = stage.findAdds(f);
-        if (stagingHash == null) {
+        if (stagingHash == null && !stage.containAdd(f)) {
             //文件需要stage
             //no counterpart in stage
             stage.stageOne(f, currentHash);
-            stage.removals.remove(currentHash);
-            added=true;
+            stage.removals.remove(f);
+            added = true;
         } else if (!Objects.equals(stagingHash, currentHash)) {
             //相应文件存在,但是内容冲突,覆盖
             //conflict
             stage.replace(f, currentHash);
             //如果如果stage里面有这个文件的add,说明之前必然有上面的过程,不用再去掉这个文件的remove
-            added= true;
+            added = true;
         }
         //如果完全相同,那么上面都不是,不动
         //check if the file is previously tracked in the latest commit
 
 
         //排除兜兜转转又回到起点的情况
-        if (HEAD.existTracked(f, currentHash)) {
+        if (HEADCommit.contain(f) && currentHash.equals(HEADCommit.getTracked(f))) {
+
             stage.removeAdd(f);
-            added=false;
+            added = false;
         }
+        save();
         return added;
     }
 
@@ -179,16 +201,11 @@ public class Repository {
             throw error("No changes added to the commit.");
         }
         //create new commit
-        HEAD = Commit.newCommit(msg);
+        HEADCommit = Commit.newCommit(msg);
         //save it
-        HEAD.saveCommit();
+        writeContents(join(BRANCHES, HEAD), HEADCommit.toHash());
+        HEADCommit.saveCommit();
         save();
-    }
-
-    public static void save() {
-        HEADid = HEAD.toHash();
-        Utils.writeObject(STAGE, stage);
-        Utils.writeObject(HEADID_FILE, HEADid);
     }
 
     public static boolean removeAdd(String f) {
@@ -200,13 +217,16 @@ public class Repository {
         byte[] blob = Utils.readContents(file);
         return Utils.sha1((Object) blob);
     }
-    public static void rm(String f){
-        boolean inAdd = removeAdd(f);
+
+    public static void rm(String name) {
+        boolean inAdd = removeAdd(name);
+        //try to remove corresponding addition
         if (!inAdd) {
-            String hash =nameToHash(f);
-            if (HEAD.existTracked(f,hash)) {
+            if (HEADCommit.contain(name)) {
                 //if tracked, take it into the removals
-                stage.removals.add(hash);
+                File current = join(CWD, name);
+                current.delete();
+                stage.removals.add(name);
             } else {
                 //if untracked, error
                 throw Utils.error("No reason to remove the file.");
@@ -214,8 +234,377 @@ public class Repository {
         }
         save();
     }
-    public static void showHEAD(){
-        load();
-        HEAD.listTrackedFiles();
+
+
+
+
+    /// create a new branch pointer to the current commit
+    public static void createNewBranch(String name) {
+        File branch = join(BRANCHES, name);
+        if (branch.exists()) {
+            throw error("A branch with that name already exists.");
+        }
+        writeContents(branch, HEADCommit.toHash());
+    }
+
+    /// find the latest commit of a given branch (what the branch points at)
+    public static Commit branchLatestCommit(String name) {
+        File branch = Utils.join(Repository.BRANCHES, name);
+        if (!branch.exists()) {
+            throw error("No such branch exists.");
+        }
+        String commitHash = Utils.readContentsAsString(branch);
+        return Commit.idToCommit(commitHash);
+    }
+
+    /// globally print the logs
+    public static void globalLog() {
+        for (String hash : Objects.requireNonNull(plainFilenamesIn(COMMITS))) {
+            File file = join(COMMITS, hash);
+            Commit commit = Utils.readObject(file, Commit.class);
+            commit.print();
+        }
+    }
+
+    /**
+     * find the commits that contains the message
+     *
+     */
+    public static void find(String finding) {
+        boolean found = false;
+        for (String hash : Objects.requireNonNull(plainFilenamesIn(COMMITS))) {
+            File file = join(COMMITS, hash);
+            Commit commit = Utils.readObject(file, Commit.class);
+            String message = commit.getMessage();
+            if (message.equals(finding)) {
+                System.out.println(commit.toHash());
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("Found no commit with that message.");
+        }
+    }
+
+    public static void status() {
+        System.out.println("=== Branches ===");
+        for (String branchName : Objects.requireNonNull(plainFilenamesIn(BRANCHES))) {
+            if (branchName.equals(HEAD)) {
+                System.out.print("*");
+            }
+            System.out.println(branchName);
+        }
+        System.out.println();
+
+        System.out.println("=== Staged Files ===");
+        for (String file : stage.additions.keySet()) {
+            System.out.println(file);
+        }
+        System.out.println();
+
+        System.out.println("=== Removed Files ===");
+        for (String file : stage.removals) {
+            System.out.println(file);
+        }
+        System.out.println();
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        System.out.println();
+        System.out.println("=== Untracked Files ===");
+
+
+    }
+
+    public static void rm_branch(String branchName) {
+
+        if (!Objects.requireNonNull(plainFilenamesIn(BRANCHES)).contains(branchName)) {
+            throw error("A branch with that name does not exist.");
+        }
+        if (Objects.equals(branchName, HEAD)) {
+            throw error("Cannot remove the current branch.");
+        }
+        File branchFile = join(BRANCHES, branchName);
+        branchFile.delete();
+    }
+
+    private static void UnsafeCheckoutOne(Commit commit, String fileName) {
+        String hash = commit.getTracked(fileName);
+        byte[] blob = readContents(join(BLOBS, hash));
+        File file = join(CWD, fileName);
+        writeContents(file, (Object) blob);
+    }
+
+    public static void checkoutOne(String commitId, String fileName) {
+        commitId = findHash(commitId);
+        Commit commit = Commit.idToCommit(commitId);
+        if (commit == null) {
+            throw error("No commit with that id exists.");
+        }
+        if (!commit.contain(fileName)) {
+            throw error("File does not exist in that commit.");
+        }
+        UnsafeCheckoutOne(commit, fileName);
+    }
+
+    public static void checkUntracked(Commit aimCommit) {
+        for (String prevFile : aimCommit.trackedFileNameList()) {
+            String prevHash = aimCommit.getTracked(prevFile);
+            String currHash = Utils.fileToHash(prevFile);
+            //过去追踪现在不追,现在有文件并且和过去不同,那么撞了
+            if (!HEADCommit.contain(prevFile) && currHash != null && !currHash.equals(prevHash)) {
+                throw error("There is an untracked file in the way;" +
+                        " delete it, or add and commit it first.");
+            }
+        }
+    }
+
+    public static void checkoutBranch(String branch) {
+        if (!Utils.plainFilenamesIn(BRANCHES).contains(branch)) {
+            throw error("No such branch exists.");
+        }
+        if (Objects.equals(branch, HEAD)) {
+            throw error("No need to checkout the current branch.");
+        }
+
+        reset(branchLatestCommit(branch).toHash(), false);
+        stage = new Stage();
+        HEAD = branch;
+        HEADCommit = branchLatestCommit(branch);
+        save();
+    }
+
+    private static String findHash(String abbr) {
+        int count = 0;
+        String real = null;
+        for (String hash : Objects.requireNonNull(plainFilenamesIn(COMMITS))) {
+            if (Objects.equals(hash, abbr)) {
+                return abbr;
+            }
+            if (hash.startsWith(abbr)) {
+                count += 1;
+                real = hash;
+            }
+
+        }
+        if (count == 1) {
+            return real;
+        } else if (count == 0) {
+            return null;
+        } else {
+            throw error("hash cracked! " + abbr + " is insufficient");
+        }
+
+    }
+
+    public static void reset(String hash, boolean moveBranch) {
+        hash = findHash(hash);
+        Commit commit = Commit.idToCommit(hash);
+        if (commit == null) {
+            throw error("No commit with that id exists.");
+        }
+
+        checkUntracked(commit);
+        ///wont overwrite,安全
+
+
+        /// 删除当前追踪的所有文件
+
+        for (String fileName : HEADCommit.trackedFileNameList()) {
+            File file = join(CWD, fileName);
+            file.delete();
+        }
+        /// 写入之前追踪的所有文件
+        for (String prevName : commit.trackedFileNameList()) {
+            String prevHash = commit.getTracked(prevName);
+            File file = join(CWD, prevName);
+            File blobFile = join(BLOBS, prevHash);
+
+            //copy from BLOBS
+            byte[] blob = readContents(blobFile);
+            writeContents(file, (Object) blob);
+        }
+
+        /// clear stage
+        stage = new Stage();
+
+
+        File currentBranchFile = join(BRANCHES, HEAD);
+        if (moveBranch) {
+            Utils.writeContents(currentBranchFile, hash);
+        }
+        HEADCommit = commit;
+        save();
+
+
+    }
+
+    private static boolean equalTrackedContent(Commit a, Commit b) {
+        if (a.trackedFileNameList().size() != b.trackedFileNameList().size()) {
+            return false;
+        }
+        boolean isEqual = true;
+        for (String fileName : a.trackedFileNameList()) {
+            if (!a.getTracked(fileName).equals(b.getTracked(fileName))) {
+                isEqual = false;
+            }
+        }
+        return isEqual;
+    }
+
+    private static Commit splitCommit(String a, String b) {
+        //对a做BFS(其他方法也行),找到所有祖先
+        Set<String> Avisited = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(a);
+        Avisited.add(a);
+        while (!queue.isEmpty()) {
+            Commit currCommit = Commit.idToCommit(queue.poll());
+            Commit parent = currCommit.parent();
+            Commit anotherParent = currCommit.anotherParent();
+            String parentId = parent == null ? null : parent.toHash();
+            String anotherParentId = anotherParent == null ? null : anotherParent.toHash();
+            if (parentId != null && !Avisited.contains(parentId)) {
+                Avisited.add(parentId);
+                queue.add(parentId);
+            }
+            if (anotherParentId != null && !Avisited.contains(anotherParentId)) {
+                Avisited.add(anotherParentId);
+                queue.add(anotherParentId);
+            }
+        }
+
+        ///对B做BFS,找到最近的A的祖先
+        queue = new LinkedList<>();
+        Set<String> Bvisited = new HashSet<>();
+        queue.add(b);
+        Bvisited.add(b);
+        while (!queue.isEmpty()) {
+            Commit currCommit = Commit.idToCommit(queue.poll());
+            if (Avisited.contains(currCommit.toHash())) {
+                return currCommit;
+            }
+            Commit parent = currCommit.parent();
+            Commit anotherParent = currCommit.anotherParent();
+            String parentId = parent == null ? null : parent.toHash();
+            String anotherParentId = anotherParent == null ? null : anotherParent.toHash();
+            if (parentId != null && !Bvisited.contains(parentId)) {
+                Bvisited.add(parentId);
+                queue.add(parentId);
+            }
+            if (anotherParentId != null && !Bvisited.contains(anotherParentId)) {
+                Bvisited.add(anotherParentId);
+                queue.add(anotherParentId);
+            }
+        }
+        throw error("debug:cannot find splitCommit!");
+
+    }
+
+    private static String mergeConflict(String fileName, String currentBlobHash, String givenBlobHash) {
+
+        byte[] current = (currentBlobHash == null) ? new byte[0]
+                : readContents(join(BLOBS, currentBlobHash));
+        byte[] given = (givenBlobHash == null) ? new byte[0]
+                : readContents(join(BLOBS, givenBlobHash));
+        byte[] left   = "<<<<<<< HEAD\n".getBytes(StandardCharsets.UTF_8);
+        byte[] middle = "=======\n".getBytes(StandardCharsets.UTF_8);
+        byte[] right  = ">>>>>>>\n".getBytes(StandardCharsets.UTF_8);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String newHash;
+        try {
+            out.write(left);
+            out.write(current);
+            out.write(middle);
+            out.write(given);
+            out.write(right);
+            byte[] result = out.toByteArray();
+            newHash = Utils.sha1((Object) result);
+            writeContents(join(BLOBS, newHash), result);
+            writeContents(join(CWD, fileName), result);
+            add(fileName);//等价于直接stage.stageOne(filename,newHash);
+        } catch (IOException e) {
+            throw error("debug:merging confilict");
+        }
+        save();
+        return newHash;
+    }
+
+    public static void merge(String givenBranch) {
+        /// 检查条件
+        if (!stage.isEmpty()) {
+            throw error("You have uncommitted changes.");
+        }
+        if (!plainFilenamesIn(BRANCHES).contains(givenBranch)) {
+            throw error("A branch with that name does not exist.");
+        }
+        if (givenBranch.equals(HEAD)) {
+            throw error("Cannot merge a branch with itself.");
+        }
+
+        Commit givenCommit = branchLatestCommit(givenBranch);
+
+        checkUntracked(givenCommit);
+
+
+        /// 边界情况
+        Commit splitCommit = splitCommit(HEADCommit.toHash(), givenCommit.toHash());
+        if (splitCommit.equals(givenCommit)) {
+            throw error("Given branch is an ancestor of the current branch.");
+        }
+        if (splitCommit.equals(HEADCommit)) {
+            checkoutBranch(givenBranch);
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        }
+
+        /** 主体*/
+        Set<String> splitList = new HashSet<>(splitCommit.trackedFileNameList());
+        Set<String> headlist = new HashSet<>(HEADCommit.trackedFileNameList());
+        Set<String> givenlist = new HashSet<>(givenCommit.trackedFileNameList());
+        // 并集
+        Set<String> allTracked = new HashSet<>(splitList);
+        allTracked.addAll(headlist);
+        allTracked.addAll(givenlist);
+
+        boolean conflicted = false;
+        for (String fileName : allTracked) {
+            String splitHash = splitCommit.getTracked(fileName);
+            String headHash = HEADCommit.getTracked(fileName);
+            String givenHash = givenCommit.getTracked(fileName);
+            boolean headChanged = !Objects.equals(splitHash, headHash);
+            boolean givenChanged = !Objects.equals(splitHash, givenHash);
+            /// 1
+            if (givenChanged && !headChanged) {
+                if (givenHash == null) {
+                    rm(fileName);
+                } else {
+                    writeFromBlob(fileName, givenHash);
+                    add(fileName);
+                }
+                continue;
+            }
+            /// 2
+            if (!givenChanged && headChanged) {
+                //stay as they are
+                continue;
+            }
+            /// 3
+            if (Objects.equals(givenHash, headHash)) {
+                continue;
+            }
+            /// 4567 Redundant
+            /// 8 always true
+            if (givenChanged && headChanged && !Objects.equals(givenHash, headHash)) {
+                mergeConflict(fileName, headHash, givenHash);
+                conflicted = true;
+            }
+        }
+        Commit.mergeCommit(givenBranch);
+        if (conflicted) {
+            System.out.println("Encountered a merge conflict.");
+        }
+        save();
+
+
     }
 }

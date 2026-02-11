@@ -46,7 +46,7 @@ public class Commit implements Serializable {
     //文件路径->hash
 
 
-    private Commit(String msg, long timestampRaw, String parentId) {
+    private Commit(String msg, long timestampRaw, String parentId, String anotherParentId) {
         message = msg;
         this.timestampRaw = timestampRaw;
         this.timestamp = getCurrentTimestamp(timestampRaw);
@@ -55,19 +55,24 @@ public class Commit implements Serializable {
     }
 
     public static Commit initialCommit() {
-        return new Commit("initial commit", 0, null);
+        return new Commit("initial commit", 0, null, null);
     }
 
     public static Commit newCommit(String msg) {
-        return new Commit(msg, getCurrentTimestampRaw(), HEADid);
+        return new Commit(msg, getCurrentTimestampRaw(), HEADCommit.toHash(), null);
     }
 
-    public void printCommit() {
+    public void print() {
         System.out.println("===");
         System.out.println("commit " + this.toHash());
         //TODO: merged commit
         System.out.println("Date: " + timestamp);
         System.out.println(message);
+        System.out.println();
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     private static long getCurrentTimestampRaw() {
@@ -82,18 +87,22 @@ public class Commit implements Serializable {
     }
 
     private static TreeMap<String, String> generateTrackedList(String parentId) {
+        Commit fromCommit = idToCommit(parentId);
         TreeMap<String, String> newTracked;
         if (parentId == null) {
             newTracked = new TreeMap<>();
         } else {
-            newTracked = new TreeMap<>(HEAD.trackedFiles);
+            newTracked = new TreeMap<>(fromCommit.trackedFiles);
         }
-        newTracked = Repository.applyModify(newTracked);
-        return newTracked;
+        return Repository.applyModify(newTracked);
     }
 
-    public boolean existTracked(String file, String hash) {
-        return Objects.equals(trackedFiles.get(file), hash);
+    public boolean contain(String file) {
+        return trackedFiles.containsKey(file);
+    }
+
+    public String getTracked(String file) {
+        return trackedFiles.get(file);
     }
 
     public static Commit idToCommit(String commitHash) {
@@ -101,6 +110,9 @@ public class Commit implements Serializable {
             return null;
         }
         File commitFile = join(Repository.COMMITS, commitHash);
+        if (!commitFile.exists()) {
+            return null;
+        }
         return Utils.readObject(commitFile, Commit.class);
     }
 
@@ -109,18 +121,48 @@ public class Commit implements Serializable {
     }
 
     public String toHash() {
-        return Utils.sha1(message+timestampRaw+parentId);
+        return Utils.sha1(message + timestampRaw + parentId, serialize(trackedFiles));
     }
 
     public Commit parent() {
         return idToCommit(parentId);
     }
-    public void listTrackedFiles(){
-        for(String file: trackedFiles.keySet()){
-            System.out.println(file+" "+trackedFiles.get(file));
+
+    public Commit anotherParent() {
+        return idToCommit(anotherParentId);
+    }
+
+    public void printTrackedFiles() {
+        for (String file : trackedFiles.keySet()) {
+            System.out.println(file + " " + trackedFiles.get(file));
         }
     }
-    private static void merge() {
+
+    public Set<String> trackedFileNameList() {
+        return this.trackedFiles.keySet();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Commit)) {
+            return false;
+        }
+        Commit other = (Commit) o;
+        return this.toHash().equals(other.toHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toHash().hashCode();
+    }
+
+    public static Commit mergeCommit(String branch) {
+        String msg = "Merged " + branch + " into " + HEAD + ".";
+        String anotherParentId = Repository.branchLatestCommit(branch).toHash();
+        return new Commit(msg, getCurrentTimestampRaw(), HEADCommit.toHash(), anotherParentId);
     }
 
     /* TODO: fill in the rest of this class. */
