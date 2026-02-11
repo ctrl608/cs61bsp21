@@ -15,8 +15,8 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet commit object.
- *
- *  does at a high level.
+ * <p>
+ * does at a high level.
  *
  *
  *
@@ -65,8 +65,8 @@ public class Commit implements Serializable {
     public void print() {
         System.out.println("===");
         System.out.println("commit " + this.toHash());
-        if(anotherParent()!=null){
-            System.out.printf("Merge: %7s %7s\n",parentId,anotherParentId);
+        if (anotherParent() != null) {
+            System.out.printf("Merge: %7s %7s\n", parentId, anotherParentId);
         }
         System.out.println("Date: " + timestamp);
         System.out.println(message);

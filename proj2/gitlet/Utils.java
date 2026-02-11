@@ -184,12 +184,12 @@ class Utils {
      * Filter out all but plain files.
      */
     private static final FilenameFilter PLAIN_FILES =
-        new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return new File(dir, name).isFile();
-            }
-        };
+            new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return new File(dir, name).isFile();
+                }
+            };
 
     /**
      * Returns a list of the names of all plain files in the directory DIR, in
@@ -298,7 +298,7 @@ class Utils {
 
     public static boolean writeFromBlob(String fileName, String blobName) {
         File file = join(Repository.CWD, fileName);
-        File blobFile = join(Repository.CWD, blobName);
+        File blobFile = join(Repository.BLOBS, blobName);
         if (!blobFile.exists()) {
             return false;
         }

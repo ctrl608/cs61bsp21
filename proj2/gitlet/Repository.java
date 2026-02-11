@@ -16,7 +16,7 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet repository.
- *  does at a high level.
+ * does at a high level.
  *
  * @author TODO
  */
@@ -232,8 +232,6 @@ public class Repository {
     }
 
 
-
-
     /// create a new branch pointer to the current commit
     public static void createNewBranch(String name) {
         File branch = join(BRANCHES, name);
@@ -348,7 +346,7 @@ public class Repository {
             //过去追踪现在不追,现在有文件并且和过去不同,那么撞了
             if (!HEADCommit.contain(prevFile) && currHash != null && !currHash.equals(prevHash)) {
                 throw error("There is an untracked file in the way;"
-                        +" delete it, or add and commit it first.");
+                        + " delete it, or add and commit it first.");
             }
         }
     }
@@ -495,13 +493,16 @@ public class Repository {
 
     }
 
-    private static String mergeConflict(String fileName, String currentBlobHash, String givenBlobHash) {
+    private static String mergeConflict(String fileName,
+                                        String currentBlobHash, String givenBlobHash) {
 
-        byte[] current = (currentBlobHash == null) ? new byte[0]: readContents(join(BLOBS, currentBlobHash));
-        byte[] given = (givenBlobHash == null) ? new byte[0]: readContents(join(BLOBS, givenBlobHash));
-        byte[] left   = "<<<<<<< HEAD\n".getBytes(StandardCharsets.UTF_8);
+        byte[] current = (currentBlobHash == null) ?
+                new byte[0] : readContents(join(BLOBS, currentBlobHash));
+        byte[] given = (givenBlobHash == null) ?
+                new byte[0] : readContents(join(BLOBS, givenBlobHash));
+        byte[] left = "<<<<<<< HEAD\n".getBytes(StandardCharsets.UTF_8);
         byte[] middle = "=======\n".getBytes(StandardCharsets.UTF_8);
-        byte[] right  = ">>>>>>>\n".getBytes(StandardCharsets.UTF_8);
+        byte[] right = ">>>>>>>\n".getBytes(StandardCharsets.UTF_8);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         String newHash;
@@ -515,10 +516,10 @@ public class Repository {
             newHash = Utils.sha1((Object) result);
             writeContents(join(BLOBS, newHash), result);
             writeContents(join(CWD, fileName), result);
-            stage.stageOne(fileName,newHash);
+            stage.stageOne(fileName, newHash);
             //等价于直接stage.stageOne(filename,newHash);
         } catch (IOException e) {
-            throw error("debug: error: in merging confilict"+e.getMessage());
+            throw error("debug: error: in merging confilict" + e.getMessage());
         }
         save();
         return newHash;
@@ -569,11 +570,13 @@ public class Repository {
             boolean headChanged = !Objects.equals(splitHash, headHash);
             boolean givenChanged = !Objects.equals(splitHash, givenHash);
             /// 1
-            if (givenChanged && !headChanged) {
+            if (splitHash != null && givenChanged && !headChanged) {
                 if (givenHash == null) {
                     rm(fileName);
                 } else {
-                    writeFromBlob(fileName, givenHash);
+                    if (!writeFromBlob(fileName, givenHash)) {
+                        throw error("debug: blob missing " + givenHash);
+                    }
                     add(fileName);
                 }
                 continue;
