@@ -1,6 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
 
 import java.io.File;
 import java.io.Serializable;
@@ -16,14 +15,15 @@ import static gitlet.Utils.*;
 
 /**
  * Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
+ *
  *  does at a high level.
  *
- * @author TODO
+ *
+ *
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
+     *
      *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
@@ -65,7 +65,9 @@ public class Commit implements Serializable {
     public void print() {
         System.out.println("===");
         System.out.println("commit " + this.toHash());
-        //TODO: merged commit
+        if(anotherParent()!=null){
+            System.out.printf("Merge: %7s %7s\n",parentId,anotherParentId);
+        }
         System.out.println("Date: " + timestamp);
         System.out.println(message);
         System.out.println();
@@ -165,5 +167,4 @@ public class Commit implements Serializable {
         return new Commit(msg, getCurrentTimestampRaw(), HEADCommit.toHash(), anotherParentId);
     }
 
-    /* TODO: fill in the rest of this class. */
 }

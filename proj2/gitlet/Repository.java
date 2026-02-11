@@ -13,18 +13,15 @@ import static gitlet.Main.*;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
 
 /**
  * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  * @author TODO
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -49,8 +46,8 @@ public class Repository {
 
 
     public static class Stage implements Serializable {
-        public TreeMap<String, String> additions;
-        public TreeSet<String> removals;
+        private TreeMap<String, String> additions;
+        private TreeSet<String> removals;
 
         Stage() {
             additions = new TreeMap<>();
@@ -91,7 +88,6 @@ public class Repository {
     }
 
 
-    /* TODO: fill in the rest of this class. */
     public static void init() {
         GITLET_DIR.mkdir();
         COMMITS.mkdir();
@@ -314,7 +310,7 @@ public class Repository {
 
     }
 
-    public static void rm_branch(String branchName) {
+    public static void rmBranch(String branchName) {
 
         if (!Objects.requireNonNull(plainFilenamesIn(BRANCHES)).contains(branchName)) {
             throw error("A branch with that name does not exist.");
@@ -326,7 +322,7 @@ public class Repository {
         branchFile.delete();
     }
 
-    private static void UnsafeCheckoutOne(Commit commit, String fileName) {
+    private static void unsafeCheckoutOne(Commit commit, String fileName) {
         String hash = commit.getTracked(fileName);
         byte[] blob = readContents(join(BLOBS, hash));
         File file = join(CWD, fileName);
@@ -342,7 +338,7 @@ public class Repository {
         if (!commit.contain(fileName)) {
             throw error("File does not exist in that commit.");
         }
-        UnsafeCheckoutOne(commit, fileName);
+        unsafeCheckoutOne(commit, fileName);
     }
 
     public static void checkUntracked(Commit aimCommit) {
@@ -351,8 +347,8 @@ public class Repository {
             String currHash = Utils.fileToHash(prevFile);
             //过去追踪现在不追,现在有文件并且和过去不同,那么撞了
             if (!HEADCommit.contain(prevFile) && currHash != null && !currHash.equals(prevHash)) {
-                throw error("There is an untracked file in the way;" +
-                        " delete it, or add and commit it first.");
+                throw error("There is an untracked file in the way;"
+                        +" delete it, or add and commit it first.");
             }
         }
     }
@@ -452,46 +448,46 @@ public class Repository {
 
     private static Commit splitCommit(String a, String b) {
         //对a做BFS(其他方法也行),找到所有祖先
-        Set<String> Avisited = new HashSet<>();
+        Set<String> avisited = new HashSet<>();
         Queue<String> queue = new LinkedList<>();
         queue.add(a);
-        Avisited.add(a);
+        avisited.add(a);
         while (!queue.isEmpty()) {
             Commit currCommit = Commit.idToCommit(queue.poll());
             Commit parent = currCommit.parent();
             Commit anotherParent = currCommit.anotherParent();
             String parentId = parent == null ? null : parent.toHash();
             String anotherParentId = anotherParent == null ? null : anotherParent.toHash();
-            if (parentId != null && !Avisited.contains(parentId)) {
-                Avisited.add(parentId);
+            if (parentId != null && !avisited.contains(parentId)) {
+                avisited.add(parentId);
                 queue.add(parentId);
             }
-            if (anotherParentId != null && !Avisited.contains(anotherParentId)) {
-                Avisited.add(anotherParentId);
+            if (anotherParentId != null && !avisited.contains(anotherParentId)) {
+                avisited.add(anotherParentId);
                 queue.add(anotherParentId);
             }
         }
 
         ///对B做BFS,找到最近的A的祖先
         queue = new LinkedList<>();
-        Set<String> Bvisited = new HashSet<>();
+        Set<String> bvisited = new HashSet<>();
         queue.add(b);
-        Bvisited.add(b);
+        bvisited.add(b);
         while (!queue.isEmpty()) {
             Commit currCommit = Commit.idToCommit(queue.poll());
-            if (Avisited.contains(currCommit.toHash())) {
+            if (avisited.contains(currCommit.toHash())) {
                 return currCommit;
             }
             Commit parent = currCommit.parent();
             Commit anotherParent = currCommit.anotherParent();
             String parentId = parent == null ? null : parent.toHash();
             String anotherParentId = anotherParent == null ? null : anotherParent.toHash();
-            if (parentId != null && !Bvisited.contains(parentId)) {
-                Bvisited.add(parentId);
+            if (parentId != null && !bvisited.contains(parentId)) {
+                bvisited.add(parentId);
                 queue.add(parentId);
             }
-            if (anotherParentId != null && !Bvisited.contains(anotherParentId)) {
-                Bvisited.add(anotherParentId);
+            if (anotherParentId != null && !bvisited.contains(anotherParentId)) {
+                bvisited.add(anotherParentId);
                 queue.add(anotherParentId);
             }
         }
@@ -501,10 +497,8 @@ public class Repository {
 
     private static String mergeConflict(String fileName, String currentBlobHash, String givenBlobHash) {
 
-        byte[] current = (currentBlobHash == null) ? new byte[0]
-                : readContents(join(BLOBS, currentBlobHash));
-        byte[] given = (givenBlobHash == null) ? new byte[0]
-                : readContents(join(BLOBS, givenBlobHash));
+        byte[] current = (currentBlobHash == null) ? new byte[0]: readContents(join(BLOBS, currentBlobHash));
+        byte[] given = (givenBlobHash == null) ? new byte[0]: readContents(join(BLOBS, givenBlobHash));
         byte[] left   = "<<<<<<< HEAD\n".getBytes(StandardCharsets.UTF_8);
         byte[] middle = "=======\n".getBytes(StandardCharsets.UTF_8);
         byte[] right  = ">>>>>>>\n".getBytes(StandardCharsets.UTF_8);
@@ -521,9 +515,10 @@ public class Repository {
             newHash = Utils.sha1((Object) result);
             writeContents(join(BLOBS, newHash), result);
             writeContents(join(CWD, fileName), result);
-            add(fileName);//等价于直接stage.stageOne(filename,newHash);
+            stage.stageOne(fileName,newHash);
+            //等价于直接stage.stageOne(filename,newHash);
         } catch (IOException e) {
-            throw error("debug:merging confilict");
+            throw error("debug: error: in merging confilict"+e.getMessage());
         }
         save();
         return newHash;

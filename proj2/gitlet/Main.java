@@ -2,7 +2,6 @@ package gitlet;
 
 //import java.io.IOException;
 
-import java.io.File;
 import java.util.Objects;
 
 import static gitlet.Repository.*;
@@ -29,7 +28,6 @@ public class Main {
 
 
     public static void main(String[] args) {
-        // TODO: what if args is empty?
         Utils.checkArgsAtLeast(args, 1,"Please enter a command.");
         String firstArg = args[0];
         if (!Repository.GITLET_DIR.exists() && !firstArg.equals("init")) {
@@ -57,7 +55,6 @@ public class Main {
                     //save current situation
                     Repository.save();
                     break;
-                // TODO: FILL THE REST IN
                 case "commit":
                     Utils.checkArgs(args, 2, "Please enter a commit message.");
                     if (args[1].isEmpty()) {
@@ -113,7 +110,7 @@ public class Main {
                     break;
                 case "rm-branch":
                     Utils.checkArgs(args, 2, "Incorrect operands.");
-                    Repository.rm_branch(args[1]);
+                    Repository.rmBranch(args[1]);
                     break;
                 case "reset":
                     Utils.checkArgs(args, 2, "Incorrect operands.");
