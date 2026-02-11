@@ -51,6 +51,7 @@ public class Commit implements Serializable {
         this.timestampRaw = timestampRaw;
         this.timestamp = getCurrentTimestamp(timestampRaw);
         this.parentId = parentId;
+        this.anotherParentId=anotherParentId;
         trackedFiles = generateTrackedList(parentId);
     }
 

@@ -590,7 +590,16 @@ public class Repository {
             if (Objects.equals(givenHash, headHash)) {
                 continue;
             }
-            /// 4567 Redundant
+            /// 467 Redundant
+
+            /// 5: not in split, not in head, but in given -> checkout and stage
+            if (splitHash == null && headHash == null && givenHash != null) {
+                if (!writeFromBlob(fileName, givenHash)) {
+                    throw error("debug: blob missing " + givenHash);
+                }
+                add(fileName);
+                continue;
+            }
             /// 8 always true
             if (givenChanged && headChanged && !Objects.equals(givenHash, headHash)) {
                 mergeConflict(fileName, headHash, givenHash);
