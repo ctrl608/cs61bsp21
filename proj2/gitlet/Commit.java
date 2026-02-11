@@ -51,7 +51,7 @@ public class Commit implements Serializable {
         this.timestampRaw = timestampRaw;
         this.timestamp = getCurrentTimestamp(timestampRaw);
         this.parentId = parentId;
-        this.anotherParentId=anotherParentId;
+        this.anotherParentId = anotherParentId;
         trackedFiles = generateTrackedList(parentId);
     }
 
@@ -162,7 +162,7 @@ public class Commit implements Serializable {
         return this.toHash().hashCode();
     }
 
-    public static Commit mergeCommit(String branch) {
+    public static Commit newMergeCommit(String branch) {
         String msg = "Merged " + branch + " into " + HEAD + ".";
         String anotherParentId = Repository.branchLatestCommit(branch).toHash();
         return new Commit(msg, getCurrentTimestampRaw(), HEADCommit.toHash(), anotherParentId);

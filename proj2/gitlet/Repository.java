@@ -203,6 +203,17 @@ public class Repository {
         HEADCommit.saveCommit();
         save();
     }
+    public static void mergeCommit(String mergeBranch) {
+        if (stage.isEmpty()) {
+            throw error("No changes added to the commit.");
+        }
+        //create new commit
+        HEADCommit = Commit.newMergeCommit(mergeBranch);
+        //save it
+        writeContents(join(BRANCHES, HEAD), HEADCommit.toHash());
+        HEADCommit.saveCommit();
+        save();
+    }
 
     public static boolean removeAdd(String f) {
         return stage.removeAdd(f);
@@ -496,10 +507,10 @@ public class Repository {
     private static String mergeConflict(String fileName,
                                         String currentBlobHash, String givenBlobHash) {
 
-        byte[] current = (currentBlobHash == null) ?
-                new byte[0] : readContents(join(BLOBS, currentBlobHash));
-        byte[] given = (givenBlobHash == null) ?
-                new byte[0] : readContents(join(BLOBS, givenBlobHash));
+        byte[] current = (currentBlobHash == null)
+                ? new byte[0] : readContents(join(BLOBS, currentBlobHash));
+        byte[] given = (givenBlobHash == null)
+                ? new byte[0] : readContents(join(BLOBS, givenBlobHash));
         byte[] left = "<<<<<<< HEAD\n".getBytes(StandardCharsets.UTF_8);
         byte[] middle = "=======\n".getBytes(StandardCharsets.UTF_8);
         byte[] right = ">>>>>>>\n".getBytes(StandardCharsets.UTF_8);
@@ -525,7 +536,8 @@ public class Repository {
         return newHash;
     }
 
-    public static void merge(String givenBranch) {
+    public static void merge(
+            String givenBranch) {
         /// 检查条件
         if (!stage.isEmpty()) {
             throw error("You have uncommitted changes.");
@@ -606,7 +618,7 @@ public class Repository {
                 conflicted = true;
             }
         }
-        Commit.mergeCommit(givenBranch);
+        mergeCommit(givenBranch);
         if (conflicted) {
             System.out.println("Encountered a merge conflict.");
         }
