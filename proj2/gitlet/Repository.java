@@ -536,13 +536,7 @@ public class Repository {
         save();
         return newHash;
     }
-
-
-
-
-    public static void merge(
-            String givenBranch) {
-        /// 检查条件
+    public static void mergeBasicCheck(String givenBranch){
         if (!stage.isEmpty()) {
             throw error("You have uncommitted changes.");
         }
@@ -552,6 +546,12 @@ public class Repository {
         if (givenBranch.equals(HEAD)) {
             throw error("Cannot merge a branch with itself.");
         }
+    }
+
+
+
+    public static void merge(String givenBranch) {
+        mergeBasicCheck(givenBranch);
 
         Commit givenCommit = branchLatestCommit(givenBranch);
 
@@ -568,7 +568,6 @@ public class Repository {
             System.out.println("Current branch fast-forwarded.");
             return;
         }
-
         /** 主体*/
         Set<String> splitList = new HashSet<>(splitCommit.trackedFileNameList());
         Set<String> headlist = new HashSet<>(HEADCommit.trackedFileNameList());
@@ -577,7 +576,6 @@ public class Repository {
         Set<String> allTracked = new HashSet<>(splitList);
         allTracked.addAll(headlist);
         allTracked.addAll(givenlist);
-
         boolean conflicted = false;
         for (String fileName : allTracked) {
             String splitHash = splitCommit.getTracked(fileName);
@@ -607,7 +605,6 @@ public class Repository {
                 continue;
             }
             /// 467 Redundant
-
             /// 5: not in split, not in head, but in given -> checkout and stage
             if (splitHash == null && headHash == null && givenHash != null) {
                 if (!writeFromBlob(fileName, givenHash)) {
@@ -627,7 +624,5 @@ public class Repository {
             System.out.println("Encountered a merge conflict.");
         }
         save();
-
-
     }
 }
