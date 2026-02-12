@@ -28,16 +28,16 @@ public class Main {
 
 
     public static void main(String[] args) {
-        Utils.checkArgsAtLeast(args, 1,"Please enter a command.");
-        String firstArg = args[0];
-        if (!Repository.GITLET_DIR.exists() && !firstArg.equals("init")) {
-            throw Utils.error("Not in an initialized Gitlet directory.");
-        }
-        //try to load from repos
-        if (Repository.GITLET_DIR.exists()) {
-            load();
-        }
         try {
+            Utils.checkArgsAtLeast(args, 1, "Please enter a command.");
+            String firstArg = args[0];
+            if (!Repository.GITLET_DIR.exists() && !firstArg.equals("init")) {
+                throw Utils.error("Not in an initialized Gitlet directory.");
+            }
+            //try to load from repos
+            if (Repository.GITLET_DIR.exists()) {
+                load();
+            }
 
             switch (firstArg) {
 
@@ -117,7 +117,7 @@ public class Main {
                     Repository.reset(args[1], true);
                     break;
                 case "merge":
-                    Utils.checkArgs(args,2,"Incorrect operands.");
+                    Utils.checkArgs(args, 2, "Incorrect operands.");
                     Repository.merge(args[1]);
                     break;
                 default:

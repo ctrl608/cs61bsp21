@@ -537,6 +537,9 @@ public class Repository {
         return newHash;
     }
 
+
+
+
     public static void merge(
             String givenBranch) {
         /// 检查条件
