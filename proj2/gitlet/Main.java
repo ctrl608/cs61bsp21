@@ -127,7 +127,9 @@ public class Main {
         } catch (GitletException e) {
             System.out.println(e.getMessage());
         }
-        save();
+        if (GITLET_DIR.exists()) {
+            save();
+        }
     }
 
 }
