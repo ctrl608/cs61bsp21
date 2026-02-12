@@ -203,6 +203,7 @@ public class Repository {
         HEADCommit.saveCommit();
         save();
     }
+
     public static void mergeCommit(String mergeBranch) {
         if (stage.isEmpty()) {
             throw error("No changes added to the commit.");
