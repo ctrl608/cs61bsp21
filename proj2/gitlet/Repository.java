@@ -536,7 +536,8 @@ public class Repository {
         save();
         return newHash;
     }
-    public static void mergeBasicCheck(String givenBranch){
+
+    public static void mergeBasicCheck(String givenBranch) {
         if (!stage.isEmpty()) {
             throw error("You have uncommitted changes.");
         }
@@ -547,7 +548,6 @@ public class Repository {
             throw error("Cannot merge a branch with itself.");
         }
     }
-
 
 
     public static void merge(String givenBranch) {
