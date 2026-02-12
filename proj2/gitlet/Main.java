@@ -29,14 +29,14 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+            //try to load from repos
+            if (Repository.GITLET_DIR.exists()) {
+                load();
+            }
             Utils.checkArgsAtLeast(args, 1, "Please enter a command.");
             String firstArg = args[0];
             if (!Repository.GITLET_DIR.exists() && !firstArg.equals("init")) {
                 throw Utils.error("Not in an initialized Gitlet directory.");
-            }
-            //try to load from repos
-            if (Repository.GITLET_DIR.exists()) {
-                load();
             }
 
             switch (firstArg) {
