@@ -43,7 +43,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     }
 
-    BSTNode<K, V> head;
+    private BSTNode<K, V> head;
 
     public BSTMap() {
         head = null;
