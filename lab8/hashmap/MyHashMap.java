@@ -163,17 +163,22 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public void put(K key, V value) {
-        if (!containsKey(key)) {
-            size += 1;
-            buckets[hashIndex(key)].add(new Node(key, value));
-            keySet.add(key);
-            return;
-        }
-        remove(key);
-        keySet.add(key);
-        buckets[hashIndex(key)].add(new Node(key, value));
+        Collection<Node> bucket = buckets[hashIndex(key)];
 
+        // 如果 key 已存在：原地更新 value
+        for (Node node : bucket) {
+            if (Objects.equals(node.key, key)) {
+                node.value = value;
+                return;
+            }
+        }
+
+        // 不存在：插入新节点
+        bucket.add(new Node(key, value));
+        keySet.add(key);
+        size += 1; // 如果你维护 size
     }
+
 
     @Override
     public Set<K> keySet() {
