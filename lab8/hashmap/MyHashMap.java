@@ -100,10 +100,10 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
      * @param tableSize the size of the table to create
      */
     private Collection<Node>[] createTable(int tableSize) {
-         Collection[] table=new Collection[tableSize];
-         for(int i=0;i<tableSize;++i){
-             table[i]=createBucket();
-         }
+        Collection[] table = new Collection[tableSize];
+        for (int i = 0; i < tableSize; ++i) {
+            table[i] = createBucket();
+        }
         return table;
     }
 
@@ -157,7 +157,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         return size;
     }
 
-    public int length() {
+    private int length() {
         return buckets.length;
     }
 
@@ -165,13 +165,13 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     public void put(K key, V value) {
         if (!containsKey(key)) {
             size += 1;
-            buckets[hashIndex(key)].add(new Node(key,value));
+            buckets[hashIndex(key)].add(new Node(key, value));
             keySet.add(key);
             return;
         }
         remove(key);
         keySet.add(key);
-        buckets[hashIndex(key)].add(new Node(key,value));
+        buckets[hashIndex(key)].add(new Node(key, value));
 
     }
 
