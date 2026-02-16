@@ -185,17 +185,20 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         if (!keySet.contains(key)) {
             return null;
         }
-        Collection<Node> bucket = buckets[hashIndex(key)];
 
-        for (Iterator<Node> it = bucket.iterator(); it.hasNext(); ) {
+        Collection<Node> bucket = buckets[hashIndex(key)];
+        Iterator<Node> it = bucket.iterator();
+        while (it.hasNext()) {
             Node node = it.next();
-            if (node.key == key) {
+            if (Objects.equals(node.key, key)) {
                 V value = node.value;
-                bucket.remove(node);
+                it.remove();          // ✅ 安全删除
                 keySet.remove(key);
+                size -= 1;            // 如果你维护 size
                 return value;
             }
         }
+
         throw new RuntimeException("debug:key found in keySet but not in buckets");
     }
 
