@@ -111,13 +111,16 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     private void resize() {
         //不做检查,依赖外部判断
         int resizeFactor = 2;
-        Collection<Node>[] copy = buckets;
-        buckets = createTable(length() * resizeFactor);
+        Set<Node> temp=new HashSet<>();
         //转移node,keySet不变
         for (K key : keySet) {
             V value = get(key);
-            Node node = createNode(key, value);
-            buckets[hashIndex(key)].add(node);
+            temp.add(new Node(key,value));
+        }
+        buckets = createTable(length() * resizeFactor);
+
+        for(Node node :temp){
+            buckets[hashIndex(node.key)].add(node);
         }
     }
 
@@ -177,6 +180,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         bucket.add(new Node(key, value));
         keySet.add(key);
         size += 1; // 如果你维护 size
+        if((double)size/length()>=load){
+            resize();
+        }
     }
 
 
@@ -209,21 +215,20 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public V remove(K key, V value) {
-        if (!keySet.contains(key)) {
-            return null;
-        }
         Collection<Node> bucket = buckets[hashIndex(key)];
-
-        for (Iterator<Node> it = bucket.iterator(); it.hasNext(); ) {
+        Iterator<Node> it = bucket.iterator();
+        while (it.hasNext()) {
             Node node = it.next();
-            if (node.key == key && node.value == value) {
-                bucket.remove(node);
-                return value;
+            if (Objects.equals(node.key, key) && Objects.equals(node.value, value)) {
+                V removedValue = node.value;
+                it.remove();              // 安全删除
+                keySet.remove(key);
+                size -= 1;
+                return removedValue;
             }
         }
         return null;
     }
-
     @Override
     public Iterator<K> iterator() {
         return keySet.iterator();
