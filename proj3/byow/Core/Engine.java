@@ -31,10 +31,6 @@ public class Engine {
      * including inputs from the main menu.
      */
     public Engine() {
-        worldState = null;
-        generator = null;
-        renderer = new TERenderer();
-        renderer.initialize(WIDTH, HEIGHT);
 
         keysInput = 0;
 
@@ -43,6 +39,8 @@ public class Engine {
     }
 
     public void interactWithKeyboard() {
+        renderer = new TERenderer();
+        renderer.initialize(WIDTH, HEIGHT);
         while (true) {
             if (StdDraw.hasNextKeyTyped()) {
                 char ch = StdDraw.nextKeyTyped();
