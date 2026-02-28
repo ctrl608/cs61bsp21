@@ -20,7 +20,7 @@ public class WorldGenerator {
     }
 
     private void generateStructures(TETile[][] canvas){
-        int structureNum=RandomUtils.uniform(random,10);
+        int structureNum=RandomUtils.uniform(random,2,10);
         Structure[] structures= RectangleRoom.randomStructures(structureNum,random,WIDTH,HEIGHT);
         for(Structure s:structures){
             s.draw(canvas);

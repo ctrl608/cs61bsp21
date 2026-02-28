@@ -28,7 +28,7 @@ public class TestMain {
 
     public static void str() {
 
-        String[] command = {"-s", "N14S"};
+        String[] command = {"-s", "n7095889102109223638s"};
         Main.main(command);
     }
 }
